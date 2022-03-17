@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 using UnityEngine.XR;
 
 [RequireComponent(typeof(MeshFilter))]
@@ -12,29 +13,50 @@ public class BezierCurveGen : MonoBehaviour
 {
     [SerializeField] Camera cam;
     [SerializeField] Transform[] controlPoints;
-    [Range(0, 1)] public float tTest = 0;
-    public float bendResolution = 0.05F;
-    public float cylinderResolution = 0.45F;
+    
+    [Range(0, 1)] public float tPoint = 0;
+    public float stackLength = 0.05F;
+    public float sliceAngle = 45;
     public float cylinderWidth = .2F;
     
-    //[Range(2, 20)] public int resolution = 2;
+    public int stackCount;
     public bool proceed;
     public List<Transform> bezierPointsTransforms;
     Vector3 Getpos(int i) => controlPoints[i].position;
-
     private PointOrientation _pointOrientation;
-    private int _count;
-    private GameObject _stem;
+    //private GameObject _stem;
     private float _resolutionCalculation;
+
+   public MeshFilter mf;
+   public Mesh mesh;
+   
+   public int[] triArray;
+   public Vector3[] vertArray;
+   
+   public List<Vector3> vertexList;
+   public List<int> triList;
+
     
     private void OnEnable()
     {
         bezierPointsTransforms = new List<Transform>();
-        _resolutionCalculation = bendResolution;
-        var _stem = new GameObject
+        _resolutionCalculation = stackLength;
+        var stem = new GameObject
+        {
+            name = "Stem",
+            transform =
+            {
+                parent = transform
+            }
+        };
+        mesh = new Mesh
         {
             name = "Stem"
         };
+
+        mf = new MeshFilter();
+        mf = GetComponent<MeshFilter>();
+        mf.sharedMesh = mesh;
     }
 
     public void OnDrawGizmos()
@@ -54,7 +76,7 @@ public class BezierCurveGen : MonoBehaviour
             Getpos(1),
             Color.red, EditorGUIUtility.whiteTexture,2f);
 
-        PointOrientation testpoint = GetBezierPoint(tTest);
+        PointOrientation testpoint = GetBezierPoint(tPoint);
         Handles.color = Color.white;
         var testSize = HandleUtility.GetHandleSize(testpoint.pos);
         //Handles.DrawSolidDisc(testpoint.pos,cam.transform.position,testSize * .1F);
@@ -66,9 +88,9 @@ public class BezierCurveGen : MonoBehaviour
         Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.up    * .2F), radius);
 
         Gizmos.color = Color.green;
-        foreach (var BPT in bezierPointsTransforms)
+        foreach (var bpt in bezierPointsTransforms)
         {
-            Gizmos.DrawSphere(BPT.position, radius/2);
+            Gizmos.DrawSphere(bpt.position, radius/2);
         }
     }
 
@@ -84,12 +106,13 @@ public class BezierCurveGen : MonoBehaviour
         Vector3 pos =  Vector3.Lerp(a, b, t);
         Vector3 tangent = (b - a).normalized;
 
-        if (t >= bendResolution)
+        if (t >= stackLength)
         {
-            bendResolution += _resolutionCalculation;
-            _count++;
             
-            Debug.Log("current count: " + _count);
+            stackLength += _resolutionCalculation;
+            stackCount++;
+            
+            //Debug.Log("current count: " + stackCount);
             
             /*GameObject tempGameObject = new GameObject
             {
@@ -103,19 +126,23 @@ public class BezierCurveGen : MonoBehaviour
             };
             
             bezierPointsTransforms.Add(tempGameObject.transform);*/
-            StemPointGen(GetBezierPoint(tTest));
+            StemPointGen(GetBezierPoint(tPoint));
+            //TriangleGen();
         }
         
         return new PointOrientation(pos, tangent);
         
     }
 
+   
+
     // Update is called once per frame
     void Update()
     {
-        if (proceed && tTest < 1) 
+        if (proceed && tPoint < 1) 
         {
-            tTest += .2F * Time.deltaTime;
+            //growth speed
+            tPoint += .2F * Time.deltaTime;
         }
     }
 
@@ -161,28 +188,120 @@ public class BezierCurveGen : MonoBehaviour
             }
         };
         bezierPointsTransforms.Add(StemPointLeft.transform);*/
+        float pointsInCircumference = 360 / sliceAngle;
 
-        float cylinderResolutionAngle;
-        
-        for (int i = 0; i < (360 / cylinderResolution); i++)
+        //Debug.Log("number of points in ring " + pointsInCircumference);
+        for (int i = 0; i < pointsInCircumference; i++)
         {
-            cylinderResolutionAngle = cylinderResolution * i;
+            var tempSliceAngle = sliceAngle * i;
             Vector2 v = new Vector2(cylinderWidth, cylinderWidth);
 
-            Vector3 resultV = Quaternion.Euler(0, 0, cylinderResolutionAngle) * v;
+            Vector3 resultV = Quaternion.Euler(0, 0, tempSliceAngle) * v;
             
-            var StemPoint = new GameObject
+            var stemPoint = new GameObject
             {
                 transform =
                 {
                     position = point.LocaltoWorld(resultV),
                     rotation = point.rot,
-                    parent = GameObject.Find("Stem").transform
-                }
+                    parent = transform.GetChild(3)
+                },
+                name = "Point " + bezierPointsTransforms.Count
             };
-            bezierPointsTransforms.Add(StemPoint.transform);
+            bezierPointsTransforms.Add(stemPoint.transform);
         }
-        
-        
+
+        for (int i = 0; i < stackCount; i++)
+        {
+            TriangleGen(pointsInCircumference);
+        }
+       
+        //Debug.Log("ring0: " + ring0[ring0.Length]);
+    } 
+    private void TriangleGen(float pointsInCircumference)
+    {
+        bool afterFirstTri = false;
+        if (stackCount > 1)
+        {
+            var parentOffset = transform.parent.position;
+            var pIc = (int) pointsInCircumference;
+            var bPt = bezierPointsTransforms;
+
+
+            
+
+            for (int j = 0; j < pIc; j++)
+            {
+                //Debug.Log("Count: " + j);
+                Vector3 v0 = bPt[j + bPt.Count - (pIc)].transform.position;
+                Vector3 v1 = bPt[j + bPt.Count - (pIc * 2)].transform.position;
+                Vector3 v2 = bPt[j + bPt.Count - (pIc * 2) + 1].transform.position;
+
+                //Vector3 v1 = new Vector3(1,0,0);
+                //Vector3 v2 = new Vector3(0, 0, 0);
+                v0 -= parentOffset;
+                v1 -= parentOffset;
+                v2 -= parentOffset;
+
+                vertexList.Add(v0);
+                vertexList.Add(v1);
+                vertexList.Add(v2);
+
+                /*if (!afterFirstTri)
+                {
+                    triList.Add(0);
+                    triList.Add(1);
+                    triList.Add(3);
+                }
+                else
+                {
+                    triList.Add(j+1);
+                    triList.Add(j);
+                    triList.Add(j+2);
+
+                }*/
+
+                /*triList.Add(j);
+                triList.Add(j + 1);
+                triList.Add(j + 2);*/
+
+                if (!afterFirstTri)
+                {
+                    Debug.Log("Ding");
+                    triList.Add(0);
+                    triList.Add(1);
+                    triList.Add(2);
+                }
+                else
+                {
+                    Debug.Log("Dong");
+                    triList.Add(3);
+                    triList.Add(2);
+                    triList.Add(4);
+                    
+                }
+
+                afterFirstTri = true;
+
+                /**
+                 * The Triangle Pattern is;
+                 * (0,1,3)
+                 * (3,2,5)
+                 * (5,4,7)
+                 * (7,6,9)
+                 * (9,8,11)
+                 *
+                 * so the formula is?????
+                 * 
+                 **/
+
+                //mesh.RecalculateNormals();
+                //mf.sharedMesh = mesh;
+
+                //Debug.Log(mesh.vertexCount);
+                mesh.SetVertices(vertexList);
+                mesh.SetTriangles(triList, 0);
+            }
+        }
     }
 }
