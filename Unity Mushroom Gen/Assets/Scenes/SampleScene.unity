@@ -734,7 +734,7 @@ MonoBehaviour:
   - {fileID: 286889399}
   tPoint: 0
   stackLength: 0.05
-  sliceAngle: 45
+  sliceAngle: 90
   cylinderWidth: 0.2
   stackCount: 0
   proceed: 0

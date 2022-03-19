@@ -19,7 +19,7 @@ public class BezierCurveGen : MonoBehaviour
     public float sliceAngle = 45;
     public float cylinderWidth = .2F;
     
-    public int stackCount;
+    public int stackCount = 0;
     public bool proceed;
     public List<Transform> bezierPointsTransforms;
     Vector3 Getpos(int i) => controlPoints[i].position;
@@ -29,10 +29,7 @@ public class BezierCurveGen : MonoBehaviour
 
    public MeshFilter mf;
    public Mesh mesh;
-   
-   public int[] triArray;
-   public Vector3[] vertArray;
-   
+
    public List<Vector3> vertexList;
    public List<int> triList;
 
@@ -112,26 +109,11 @@ public class BezierCurveGen : MonoBehaviour
             stackLength += _resolutionCalculation;
             stackCount++;
             
-            //Debug.Log("current count: " + stackCount);
-            
-            /*GameObject tempGameObject = new GameObject
-            {
-                transform =
-                {
-                    position = GetBezierPoint(tTest).pos,
-                    rotation = GetBezierPoint(tTest).rot,
-                    parent = GameObject.Find("Stem").transform
-                },
-                name = "Stem Point " + (_count - 1)
-            };
-            
-            bezierPointsTransforms.Add(tempGameObject.transform);*/
             StemPointGen(GetBezierPoint(tPoint));
             //TriangleGen();
         }
         
         return new PointOrientation(pos, tangent);
-        
     }
 
    
@@ -148,46 +130,6 @@ public class BezierCurveGen : MonoBehaviour
 
     void StemPointGen(PointOrientation point)
     {
-        /*var StemPointUp = new GameObject
-        {
-            transform =
-            {
-                position = point.LocaltoWorld(Vector3.up * .2F),
-                rotation = point.rot,
-                parent = GameObject.Find("Stem").transform
-            }
-        };
-        bezierPointsTransforms.Add(StemPointUp.transform);
-        var StemPointRight = new GameObject
-        {
-            transform =
-            {
-                position = point.LocaltoWorld(Vector3.right * .2F),
-                rotation = point.rot,
-                parent = GameObject.Find("Stem").transform
-            }
-        };
-        bezierPointsTransforms.Add(StemPointRight.transform);
-        var StemPointDown = new GameObject
-        {
-            transform =
-            {
-                position = point.LocaltoWorld(Vector3.down * .2F),
-                rotation = point.rot,
-                parent = GameObject.Find("Stem").transform
-            }
-        };
-        bezierPointsTransforms.Add(StemPointDown.transform);
-        var StemPointLeft = new GameObject
-        {
-            transform =
-            {
-                position = point.LocaltoWorld(Vector3.left * .2F),
-                rotation = point.rot,
-                parent = GameObject.Find("Stem").transform
-            }
-        };
-        bezierPointsTransforms.Add(StemPointLeft.transform);*/
         float pointsInCircumference = 360 / sliceAngle;
 
         //Debug.Log("number of points in ring " + pointsInCircumference);
@@ -215,30 +157,28 @@ public class BezierCurveGen : MonoBehaviour
         {
             TriangleGen(pointsInCircumference);
         }
-       
-        //Debug.Log("ring0: " + ring0[ring0.Length]);
+        
     } 
     private void TriangleGen(float pointsInCircumference)
     {
-        bool afterFirstTri = false;
-        if (stackCount > 1)
+        if (stackCount <= 1) return;
+        var parentOffset = transform.parent.position;
+        var pIc = (int) pointsInCircumference;
+        var bPt = bezierPointsTransforms;
+
+        for (int i = pIc; i < bPt.Count - 1; i++)
         {
-            var parentOffset = transform.parent.position;
-            var pIc = (int) pointsInCircumference;
-            var bPt = bezierPointsTransforms;
-
-
-            
-
-            for (int j = 0; j < pIc; j++)
-            {
-                //Debug.Log("Count: " + j);
-                Vector3 v0 = bPt[j + bPt.Count - (pIc)].transform.position;
+            /*vertexList.Clear();
+                triList.Clear();*/
+                
+            int offset = vertexList.Count;
+            Debug.Log("Count: " + i);
+                
+            /*Vector3 v0 = bPt[j + bPt.Count - (pIc)].transform.position;
                 Vector3 v1 = bPt[j + bPt.Count - (pIc * 2)].transform.position;
                 Vector3 v2 = bPt[j + bPt.Count - (pIc * 2) + 1].transform.position;
-
-                //Vector3 v1 = new Vector3(1,0,0);
-                //Vector3 v2 = new Vector3(0, 0, 0);
+                Vector3 v4 = bPt[j + bPt.Count - (pIc) + 1 ].transform.position;
+                
                 v0 -= parentOffset;
                 v1 -= parentOffset;
                 v2 -= parentOffset;
@@ -259,13 +199,13 @@ public class BezierCurveGen : MonoBehaviour
                     triList.Add(j);
                     triList.Add(j+2);
 
-                }*/
+                }#1#
 
-                /*triList.Add(j);
+                triList.Add(j);
                 triList.Add(j + 1);
-                triList.Add(j + 2);*/
+                triList.Add(j + 2);
 
-                if (!afterFirstTri)
+                /*if (!afterFirstTri)
                 {
                     Debug.Log("Ding");
                     triList.Add(0);
@@ -279,7 +219,7 @@ public class BezierCurveGen : MonoBehaviour
                     triList.Add(2);
                     triList.Add(4);
                     
-                }
+                }#1#
 
                 afterFirstTri = true;
 
@@ -293,15 +233,40 @@ public class BezierCurveGen : MonoBehaviour
                  *
                  * so the formula is?????
                  * 
-                 **/
+                 *#1#
 
                 //mesh.RecalculateNormals();
-                //mf.sharedMesh = mesh;
+                //mf.sharedMesh = mesh;*/
+                
+            vertexList.AddRange(new []
+            {
+                bPt[i].transform.position - parentOffset,
+                bPt[i+1].transform.position - parentOffset,
+                bPt[i-pIc].transform.position - parentOffset,
+                bPt[i-pIc + 1].transform.position - parentOffset
+            });
+            Debug.Log("Vert Pass");
+                
+            triList.AddRange(new []
+            {
+                offset+2,
+                offset+1,
+                offset+3,
+                    
+                offset,
+                offset+1,
+                offset+2
+            });
+            Debug.Log("Tri Pass");
 
-                //Debug.Log(mesh.vertexCount);
-                mesh.SetVertices(vertexList);
-                mesh.SetTriangles(triList, 0);
-            }
+            //Debug.Log(mesh.vertexCount);
+                
         }
+        /*mesh.vertices = vertexList.ToArray();
+        mesh.triangles = triList.ToArray();*/
+        //mesh.RecalculateNormals();
+        mesh.SetVertices(vertexList);
+        mesh.SetTriangles(triList, 0);
+        Debug.Log("Set Pass");
     }
 }
