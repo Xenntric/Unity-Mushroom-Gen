@@ -14,31 +14,32 @@ public class BezierCurveGen : MonoBehaviour
 {
     [SerializeField] Camera cam;
     [SerializeField] Transform[] controlPoints;
+    /*[Space (5)]*/
+    [Header ("======Debug Bools======")]
+    public bool generate;
+    public bool showPoints;
     
-    [Range(0, 1)] public float tPoint = 0;
+    [Header ("======Stem Options======")]
     [Range(0, 1)] public float growthSpeed = .2F;
     public float stackLength = 0.05F;
     public float sliceAngle = 45;
-    public float cylinderWidth = .2F;
+    public float stemWidth = .2F;
     
+    [Header ("======Stem Values======")]
+    [Range(0, 1)] public float tPoint = 0;
     public int stackCount = 0;
-    public bool generate;
-    public bool showPoints;
-
-    Vector3 Getpos(int i) => controlPoints[i].position;
-    private PointOrientation _pointOrientation;
-    //private GameObject _stem;
-
-    private float _stemLengthCalculation = 1;
-    private float _resolutionCalculation;
-
-    private MeshFilter _mf;
-    private Mesh _mesh;
-
+    
+    [Header ("======Stem Gen Lists======")]
     public List<Transform> bezierPointsTransforms;
     public List<Vector3> vertexList;
     public List<int> triList;
 
+    Vector3 Getpos(int i) => controlPoints[i].position;
+    private PointOrientation _pointOrientation;
+    private float _stemLengthCalculation = 1;
+    private float _resolutionCalculation;
+    private MeshFilter _mf;
+    private Mesh _mesh;
     
     private void OnEnable()
     {
@@ -66,7 +67,6 @@ public class BezierCurveGen : MonoBehaviour
 
     public void OnDrawGizmos()
     {
-        
         for (int i = 0; i < controlPoints.Length; i++)
         {
             Handles.color = Color.magenta;
@@ -89,15 +89,11 @@ public class BezierCurveGen : MonoBehaviour
         //Handles.DrawSolidDisc(testpoint.pos,cam.transform.position,testSize * .1F);
         Handles.PositionHandle(testpoint.pos, testpoint.rot);
         float radius = .03F;
+        
         Gizmos.color = Color.red;
         Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.zero), radius);
-        //Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.right * .2F), radius);
-        //Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.left  * .2F), radius);
-        //Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.down  * .2F), radius);
-        //Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.up    * .2F), radius);
-
-        Gizmos.color = Color.green;
         
+        Gizmos.color = Color.green;
         foreach (var bpt in bezierPointsTransforms)
         {
             Gizmos.DrawSphere(bpt.position, radius/2);
@@ -119,12 +115,10 @@ public class BezierCurveGen : MonoBehaviour
 
         if (t >= _stemLengthCalculation)
         {
-            
             _stemLengthCalculation += _resolutionCalculation;
             stackCount++;
             
             StemPointGen(GetBezierPoint(tPoint));
-            //TriangleGen();
         }
         
         return new PointOrientation(pos, tangent);
@@ -137,7 +131,6 @@ public class BezierCurveGen : MonoBehaviour
     {
         if (generate && tPoint < 1) 
         {
-            //growth speed
             tPoint += growthSpeed * Time.deltaTime;
         }
     }
@@ -145,12 +138,11 @@ public class BezierCurveGen : MonoBehaviour
     void StemPointGen(PointOrientation point)
     {
         float pointsInCircumference = 360 / sliceAngle;
-
-        //Debug.Log("number of points in ring " + pointsInCircumference);
+        
         for (int i = 0; i < pointsInCircumference; i++)
         {
             var tempSliceAngle = sliceAngle * i;
-            Vector2 v = new Vector2(cylinderWidth, cylinderWidth);
+            Vector2 v = new Vector2(stemWidth, stemWidth);
 
             Vector3 resultV = Quaternion.Euler(0, 0, tempSliceAngle) * v;
             
@@ -177,76 +169,8 @@ public class BezierCurveGen : MonoBehaviour
 
         for (int i = pIc; i < bPt.Count - 1; i++)
         {
-            /*vertexList.Clear();
-                triList.Clear();*/
-                
             int offset = vertexList.Count;
-            //Debug.Log("Count: " + i);
-                
-            /*Vector3 v0 = bPt[j + bPt.Count - (pIc)].transform.position;
-                Vector3 v1 = bPt[j + bPt.Count - (pIc * 2)].transform.position;
-                Vector3 v2 = bPt[j + bPt.Count - (pIc * 2) + 1].transform.position;
-                Vector3 v4 = bPt[j + bPt.Count - (pIc) + 1 ].transform.position;
-                
-                v0 -= parentOffset;
-                v1 -= parentOffset;
-                v2 -= parentOffset;
 
-                vertexList.Add(v0);
-                vertexList.Add(v1);
-                vertexList.Add(v2);
-
-                /*if (!afterFirstTri)
-                {
-                    triList.Add(0);
-                    triList.Add(1);
-                    triList.Add(3);
-                }
-                else
-                {
-                    triList.Add(j+1);
-                    triList.Add(j);
-                    triList.Add(j+2);
-
-                }#1#
-
-                triList.Add(j);
-                triList.Add(j + 1);
-                triList.Add(j + 2);
-
-                /*if (!afterFirstTri)
-                {
-                    Debug.Log("Ding");
-                    triList.Add(0);
-                    triList.Add(1);
-                    triList.Add(2);
-                }
-                else
-                {
-                    Debug.Log("Dong");
-                    triList.Add(3);
-                    triList.Add(2);
-                    triList.Add(4);
-                    
-                }#1#
-
-                afterFirstTri = true;
-
-                /**
-                 * The Triangle Pattern is;
-                 * (0,1,3)
-                 * (3,2,5)
-                 * (5,4,7)
-                 * (7,6,9)
-                 * (9,8,11)
-                 *
-                 * so the formula is?????
-                 * 
-                 *#1#
-
-                //mesh.RecalculateNormals();
-                //mf.sharedMesh = mesh;*/
-                
             vertexList.AddRange(new []
             {
                 bPt[i].transform.position - parentOffset,
@@ -254,8 +178,7 @@ public class BezierCurveGen : MonoBehaviour
                 bPt[i-pIc].transform.position - parentOffset,
                 bPt[i-pIc + 1].transform.position - parentOffset
             });
-            //Debug.Log("Vert Pass");
-                
+
             triList.AddRange(new []
             {
                 offset+2,
@@ -266,16 +189,8 @@ public class BezierCurveGen : MonoBehaviour
                 offset+1,
                 offset+2,
             });
-            //Debug.Log("Tri Pass");
-
-            //Debug.Log(mesh.vertexCount);
-                
         }
-        /*mesh.vertices = vertexList.ToArray();
-        mesh.triangles = triList.ToArray();*/
-        //mesh.RecalculateNormals();
         _mesh.SetVertices(vertexList);
         _mesh.SetTriangles(triList, 0);
-        Debug.Log("Set Pass");
     }
 }
