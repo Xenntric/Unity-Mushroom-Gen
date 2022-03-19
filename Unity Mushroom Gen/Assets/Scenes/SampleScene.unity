@@ -177,7 +177,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 224337590}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.928, y: 0.56, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1445225393}
@@ -237,7 +237,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 286889398}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 1.5, z: 0}
+  m_LocalPosition: {x: 0, y: 2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1445225393}
@@ -450,7 +450,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 1.35
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -474,7 +474,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.56, y: 1.59, z: -13.47}
+  m_LocalPosition: {x: 0.86, y: 1.59, z: -13.47}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -563,16 +563,14 @@ MonoBehaviour:
   - {fileID: 832369157}
   - {fileID: 156155429}
   tPoint: 0
+  growthSpeed: 0.2
   stackLength: 0.05
   sliceAngle: 45
   cylinderWidth: 0.2
   stackCount: 0
-  proceed: 0
+  generate: 0
+  showPoints: 0
   bezierPointsTransforms: []
-  mf: {fileID: 0}
-  mesh: {fileID: 0}
-  triArray: 
-  vertArray: []
   vertexList: []
   triList: 
 --- !u!33 &1191301173
@@ -733,16 +731,14 @@ MonoBehaviour:
   - {fileID: 224337591}
   - {fileID: 286889399}
   tPoint: 0
-  stackLength: 0.05
-  sliceAngle: 90
+  growthSpeed: 0.2
+  stackLength: 0.0125
+  sliceAngle: 22.5
   cylinderWidth: 0.2
   stackCount: 0
-  proceed: 0
+  generate: 0
+  showPoints: 0
   bezierPointsTransforms: []
-  mf: {fileID: 0}
-  mesh: {fileID: 0}
-  triArray: 
-  vertArray: []
   vertexList: []
   triList: 
 --- !u!33 &1445225395
@@ -773,7 +769,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: ca129b34b2c34024da5b140c9ff57fa4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
