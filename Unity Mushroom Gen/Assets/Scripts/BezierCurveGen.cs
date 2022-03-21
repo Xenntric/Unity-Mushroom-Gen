@@ -15,6 +15,13 @@ public class BezierCurveGen : MonoBehaviour
     [SerializeField] Camera cam;
     [SerializeField] Transform[] controlPoints;
     /*[Space (5)]*/
+    [Header("======Mushroom Caps======")] 
+    [SerializeField] public List<GameObject> stages;
+    private GameObject _capParent;
+    private List<GameObject> _loadedCaps;
+    
+    [SerializeField] public List<float> capStagePercentage;
+
     [Header ("======Debug Bools======")]
     public bool generate;
     public bool showPoints;
@@ -24,7 +31,8 @@ public class BezierCurveGen : MonoBehaviour
     public float stackLength = 0.05F;
     public float sliceAngle = 45;
     public float stemWidth = .2F;
-    
+
+
     [Header ("======Stem Values======")]
     [Range(0, 1)] public float tPoint = 0;
     public int stackCount = 0;
@@ -40,15 +48,29 @@ public class BezierCurveGen : MonoBehaviour
     private float _resolutionCalculation;
     private MeshFilter _mf;
     private Mesh _mesh;
-    
+
+    public PointOrientation testpoint;
+
+    private Vector3 parentOffset;
     private void OnEnable()
     {
+        parentOffset = transform.parent.position;
         bezierPointsTransforms = new List<Transform>();
+        _loadedCaps = new List<GameObject>();
         _resolutionCalculation = stackLength;
         _stemLengthCalculation = stackLength;
+        
         var stem = new GameObject
         {
             name = "Stem",
+            transform =
+            {
+                parent = transform
+            }
+        };
+        var caps = new GameObject
+        {
+            name = "Caps",
             transform =
             {
                 parent = transform
@@ -63,6 +85,22 @@ public class BezierCurveGen : MonoBehaviour
         _mf = GetComponent<MeshFilter>();
         _mf.sharedMesh = _mesh;
         _mesh.indexFormat = IndexFormat.UInt32;
+
+        if (stages.Capacity > 0)
+        {
+            foreach (var t in stages)
+            {
+                Instantiate(t, caps.transform).SetActive(false);
+            }
+
+            _capParent = caps;
+            //currentCap = Instantiate(currentCap, caps.transform);
+        }
+
+        for (int i = 0; i < stages.Count; i++)
+        { 
+            _loadedCaps.Add(caps.transform.GetChild(i).gameObject);
+        }
     }
 
     public void OnDrawGizmos()
@@ -75,7 +113,7 @@ public class BezierCurveGen : MonoBehaviour
             Gizmos.DrawWireSphere(Getpos(i),handleSize * .1F);
             //i.GetComponent<SphereCollider>().radius = handleSize * .0075F;
         }
-        PointOrientation testpoint = GetBezierPoint(tPoint);
+       
         if (!showPoints) return;
         Handles.DrawBezier(
             Getpos(0), 
@@ -123,12 +161,20 @@ public class BezierCurveGen : MonoBehaviour
         
         return new PointOrientation(pos, tangent);
     }
-
-   
-
+    
     // Update is called once per frame
     void Update()
     {
+        testpoint = GetBezierPoint(tPoint);
+
+        
+        /*if (stages.Count > 0)
+        {
+            testRot += rotspeed * Time.deltaTime;
+            currentCap.transform.eulerAngles = new Vector3(testRot,0,0);
+            Debug.Log("rot " + testRot);
+        }*/
+
         if (generate && tPoint < 1) 
         {
             tPoint += growthSpeed * Time.deltaTime;
@@ -159,11 +205,12 @@ public class BezierCurveGen : MonoBehaviour
             bezierPointsTransforms.Add(stemPoint.transform);
         } 
         TriangleGen(pointsInCircumference);
+        CapUpdate();
     }
     private void TriangleGen(float pointsInCircumference)
     {
         if (stackCount <= 1) return;
-        var parentOffset = transform.parent.position;
+        
         var pIc = (int) pointsInCircumference;
         var bPt = bezierPointsTransforms;
 
@@ -192,5 +239,25 @@ public class BezierCurveGen : MonoBehaviour
         }
         _mesh.SetVertices(vertexList);
         _mesh.SetTriangles(triList, 0);
+    }
+
+    private void CapUpdate()
+    {
+        _capParent.transform.position = testpoint.pos;
+        _capParent.transform.rotation = testpoint.rot;
+
+        if (capStagePercentage.Count > 0)
+        {
+            if (tPoint > 0)
+            {
+                _loadedCaps[0].SetActive(true);
+            }
+            if (tPoint > capStagePercentage[0])
+            {
+                _loadedCaps[0].SetActive(false);
+                _loadedCaps[1].SetActive(true);
+            }
+        }
+        
     }
 }
