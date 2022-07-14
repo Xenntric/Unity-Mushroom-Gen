@@ -17,7 +17,7 @@ public class BezierCurveGen : MonoBehaviour
     /*[Space (5)]*/
     [Header("======Mushroom Caps======")] 
     [SerializeField] public List<GameObject> stages;
-    private GameObject _capParent;
+    public GameObject capParent;
     private List<GameObject> _loadedCaps;
     
     [SerializeField] public List<float> capStagePercentage;
@@ -30,7 +30,7 @@ public class BezierCurveGen : MonoBehaviour
     [Range(0, 1)] public float growthSpeed = .2F;
     public float stackLength = 0.05F;
     public float sliceAngle = 45;
-    public float stemWidth = .2F;
+    public float stemWidth;
 
 
     [Header ("======Stem Values======")]
@@ -93,7 +93,7 @@ public class BezierCurveGen : MonoBehaviour
                 Instantiate(t, caps.transform).SetActive(false);
             }
 
-            _capParent = caps;
+            capParent = caps;
             //currentCap = Instantiate(currentCap, caps.transform);
         }
 
@@ -105,38 +105,41 @@ public class BezierCurveGen : MonoBehaviour
 
     public void OnDrawGizmos()
     {
-        for (int i = 0; i < controlPoints.Length; i++)
-        {
-            Handles.color = Color.magenta;
-            var handleSize = HandleUtility.GetHandleSize(Getpos(i));
-            Handles.DrawSolidDisc(Getpos(i),cam.transform.position,handleSize * .1F);
-            Gizmos.DrawWireSphere(Getpos(i),handleSize * .1F);
-            //i.GetComponent<SphereCollider>().radius = handleSize * .0075F;
-        }
-       
-        if (!showPoints) return;
-        Handles.DrawBezier(
-            Getpos(0), 
-            Getpos(2),
-            Getpos(0),
-            Getpos(1),
-            Color.red, EditorGUIUtility.whiteTexture,2f);
+        cam = Camera.current;
         
-        Handles.color = Color.white;
-        var testSize = HandleUtility.GetHandleSize(testpoint.pos);
-        //Handles.DrawSolidDisc(testpoint.pos,cam.transform.position,testSize * .1F);
-        Handles.PositionHandle(testpoint.pos, testpoint.rot);
-        float radius = .03F;
-        
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.zero), radius);
-        
-        Gizmos.color = Color.green;
-        foreach (var bpt in bezierPointsTransforms)
-        {
-            Gizmos.DrawSphere(bpt.position, radius/2);
-        }
 
+        if (showPoints)
+        {
+            for (int i = 0; i < controlPoints.Length; i++)
+            {
+                Handles.color = Color.magenta;
+                var handleSize = HandleUtility.GetHandleSize(Getpos(i));
+                Handles.DrawSolidDisc(Getpos(i),cam.transform.position,handleSize * .1F);
+                Gizmos.DrawWireSphere(Getpos(i),handleSize * .1F);
+                //i.GetComponent<SphereCollider>().radius = handleSize * .0075F;
+            }
+            
+            Handles.DrawBezier(
+                Getpos(0), 
+                Getpos(2),
+                Getpos(0),
+                Getpos(1),
+                Color.red, EditorGUIUtility.whiteTexture,2f);
+            Handles.color = Color.white;
+            var testSize = HandleUtility.GetHandleSize(testpoint.pos);
+            //Handles.DrawSolidDisc(testpoint.pos,cam.transform.position,testSize * .1F);
+            Handles.PositionHandle(testpoint.pos, testpoint.rot);
+            float radius = .03F;
+        
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(testpoint.LocaltoWorld(Vector3.zero), radius);
+        
+            Gizmos.color = Color.green;
+            foreach (var bpt in bezierPointsTransforms)
+            {
+                Gizmos.DrawSphere(bpt.position, radius/2);
+            }
+        }
     }
 
     PointOrientation GetBezierPoint(float t)
@@ -239,12 +242,15 @@ public class BezierCurveGen : MonoBehaviour
         }
         _mesh.SetVertices(vertexList);
         _mesh.SetTriangles(triList, 0);
+        _mesh.RecalculateNormals();
+        
+        
     }
 
     private void CapUpdate()
     {
-        _capParent.transform.position = testpoint.pos;
-        _capParent.transform.rotation = testpoint.rot;
+        capParent.transform.position = testpoint.pos;
+        capParent.transform.rotation = testpoint.rot;
 
         if (capStagePercentage.Count > 0)
         {
@@ -257,6 +263,7 @@ public class BezierCurveGen : MonoBehaviour
                 _loadedCaps[0].SetActive(false);
                 _loadedCaps[1].SetActive(true);
             }
+            
         }
         
     }
