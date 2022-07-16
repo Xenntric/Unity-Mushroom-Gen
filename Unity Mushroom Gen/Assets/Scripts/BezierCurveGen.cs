@@ -52,6 +52,9 @@ public class BezierCurveGen : MonoBehaviour
     public PointOrientation testpoint;
 
     private Vector3 parentOffset;
+
+    public bool finished;
+
     private void OnEnable()
     {
         parentOffset = transform.parent.position;
@@ -178,10 +181,22 @@ public class BezierCurveGen : MonoBehaviour
             Debug.Log("rot " + testRot);
         }*/
 
-        if (generate && tPoint < 1) 
+        if (generate && tPoint < 1)
         {
             tPoint += growthSpeed * Time.deltaTime;
         }
+
+        if (tPoint >= 1)
+        {
+            for (int i = 0; i < capParent.transform.childCount; i++)
+            {
+                if (!capParent.transform.GetChild(i).gameObject.activeSelf)
+                {
+                    Destroy(capParent.transform.GetChild(i).gameObject);
+                }
+            }
+        }
+        
     }
 
     void StemPointGen(PointOrientation point)
@@ -208,6 +223,10 @@ public class BezierCurveGen : MonoBehaviour
             bezierPointsTransforms.Add(stemPoint.transform);
         } 
         TriangleGen(pointsInCircumference);
+        if (!finished)
+        {
+            
+        }
         CapUpdate();
     }
     private void TriangleGen(float pointsInCircumference)
@@ -254,11 +273,11 @@ public class BezierCurveGen : MonoBehaviour
 
         if (capStagePercentage.Count > 0)
         {
-            if (tPoint > 0)
+            if (tPoint > 0 && _loadedCaps[0] != null)
             {
                 _loadedCaps[0].SetActive(true);
             }
-            if (tPoint > capStagePercentage[0])
+            if (tPoint > capStagePercentage[0] && _loadedCaps[0] != null)
             {
                 _loadedCaps[0].SetActive(false);
                 _loadedCaps[1].SetActive(true);
